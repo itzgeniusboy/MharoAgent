@@ -21,11 +21,12 @@ import mharo.__main__ as cli
 async def main() -> int:
     cli._load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-    key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_KEY")
+    key = (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_KEY")
+           or os.environ.get("OPENROUTER_API_KEY"))
     if not key:
         print(
             "LIVE_SMOKE_SKIP: no API key.\n"
-            "Set OPENAI_API_KEY (or write .env: OPENAI_API_KEY=sk-...) "
+            "Set OPENAI_API_KEY / OPENROUTER_API_KEY (ya .env: OPENAI_API_KEY=sk-...) "
             "aur dobara chalayein.",
             file=sys.stderr,
         )

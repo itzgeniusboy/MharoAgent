@@ -39,6 +39,18 @@ def _build_engine(allow_local: bool = True) -> "Engine":
         model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
         providers.append(OpenAICompatible("openai", model, openai_key, base_url=base_url))
 
+    or_key = os.environ.get("OPENROUTER_API_KEY")
+    if or_key:
+        or_model = os.environ.get("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3:free")
+        providers.append(
+            OpenAICompatible(
+                "openrouter", or_model, or_key,
+                base_url=os.environ.get(
+                    "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+                ),
+            )
+        )
+
     deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
     if deepseek_key:
         model = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
@@ -52,8 +64,8 @@ def _build_engine(allow_local: bool = True) -> "Engine":
     if not providers:
         if not allow_local:
             raise RuntimeError(
-                "no API key found — set OPENAI_API_KEY or DEEPSEEK_API_KEY "
-                "(or write keys in .env)"
+                "no API key found — set OPENAI_API_KEY / OPENROUTER_API_KEY "
+                "or DEEPSEEK_API_KEY (or write keys in .env)"
             )
         providers.append(LocalProvider())
 

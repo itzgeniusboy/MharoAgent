@@ -32,6 +32,18 @@ def test_openai_key_builds_engine(monkeypatch):
     assert eng.router.providers[0].api_key == "test-key-123"
 
 
+def test_openrouter_key_builds_engine(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-v1-test")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    eng = cli._build_engine()
+    assert len(eng.router.providers) == 1
+    assert eng.router.providers[0].name == "openrouter"
+    assert eng.router.providers[0].base_url == "https://openrouter.ai/api/v1"
+
+
 def test_dotenv_loader():
     assert cli._load_dotenv("/nonexistent/.env") is None
 
