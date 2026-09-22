@@ -46,7 +46,8 @@ CATALOG: tuple[ProviderDef, ...] = (
     ),
     # --- OpenRouter (free models :free suffix) ---
     ProviderDef(
-        "openrouter", "openrouter/free", "https://openrouter.ai/api/v1",
+        "openrouter", "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "https://openrouter.ai/api/v1",
         env=("OPENROUTER_API_KEY",), base_url_env="OPENROUTER_BASE_URL",
     ),
     # --- Direct OpenAI-compatible providers (free tiers included) ---

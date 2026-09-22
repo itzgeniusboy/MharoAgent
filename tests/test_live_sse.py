@@ -25,6 +25,14 @@ class _SSEHandler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        # Authorization required — regression: kabhi header chhut jaata tha
+        auth = self.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"error":"missing auth"}')
+            return
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
         # rate-limit-me model bhejne par ek 429 milta hai (fallback test ke liye)
@@ -77,6 +85,17 @@ async def test_live_sse_completion_bytes_over_http(sse_server):
     assert comp.finish_reason == "stop"
     assert comp.usage is not None and comp.usage.inp == 8 and comp.usage.out == 3
     assert comp.model == "gpt-4o-mini"
+    await provider.close()
+
+
+@pytest.mark.asyncio
+async def test_live_sse_requires_auth_header(sse_server):
+    """Sanity: bina Authorization ke local server bhi 401 manta hai."""
+    provider = OpenAICompatible("noauth", "gpt-4o-mini", "",
+                                base_url=sse_server, timeout_s=10)
+    from mharo.providers.errors import ProviderError
+    with pytest.raises(ProviderError):
+        await provider.complete([Message(role="user", content="hi")])
     await provider.close()
 
 

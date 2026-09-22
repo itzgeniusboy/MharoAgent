@@ -43,11 +43,14 @@ class Router:
         providers: Optional[list] = None,
         strategy: str = "cost",
         backoff_s: float = 2.0,
+        max_retries: int = 2,
     ) -> None:
         self.providers: list[Provider] = providers or []
         self.strategy = strategy
         self.stats = RouterStats()
         self._index = 0
+        self._backoff_s = backoff_s
+        self.max_retries = max_retries
 
     def _alive(self) -> list:
         return [p for p in self.providers if p.alive]
@@ -73,6 +76,7 @@ class Router:
                 return await prov.complete(messages, tools, max_tokens, temperature)
             except (AuthError, RateLimitError) as exc:
                 last = exc
+                self.stats.errors.append(exc)
                 if i < len(keys) - 1:
                     continue
             except TimeoutError2:
@@ -93,16 +97,22 @@ class Router:
             raise ProviderError("router: no alive providers")
         fallback = ""
         for prov in live:
-            try:
-                comp = await self._try(prov, messages, tools, max_tokens, temperature)
-                self.stats.last_provider = prov.name
-                self.stats.attempts += 1
-                self.stats.latency_ms = (time.monotonic() - started) * 1000.0
-                return comp
-            except ProviderError:
-                self.stats.fallbacks += 1
-                self.stats.attempts += 1
-                fallback = prov.name
+            for attempt in range(self.max_retries + 1):
+                try:
+                    comp = await self._try(prov, messages, tools, max_tokens, temperature)
+                    self.stats.last_provider = prov.name
+                    self.stats.attempts += 1
+                    self.stats.latency_ms = (time.monotonic() - started) * 1000.0
+                    return comp
+                except ProviderError:
+                    if attempt < self.max_retries:
+                        self.stats.retries += 1
+                        await asyncio.sleep(self._backoff_s * (attempt + 1))
+                        continue
+                    self.stats.fallbacks += 1
+                    self.stats.attempts += 1
+                    fallback = prov.name
+                    break
         raise ProviderError(f"router: all providers failed (last={fallback})")
 
     def add(self, provider: Provider) -> None:

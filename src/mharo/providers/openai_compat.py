@@ -51,7 +51,10 @@ class OpenAICompatible(Provider):
         self._client = httpx.AsyncClient(timeout=httpx.Timeout(timeout_s))
 
     def _headers(self) -> dict:
-        return {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def _payload(self, messages, tools=None, max_tokens=None, temperature=0.2):
         p = {
