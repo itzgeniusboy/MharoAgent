@@ -46,7 +46,7 @@ class Router:
     ) -> None:
         self.providers: list[Provider] = providers or []
         self.strategy = strategy
-        self.rates = RouterStats()
+        self.stats = RouterStats()
         self._index = 0
 
     def _alive(self) -> list:

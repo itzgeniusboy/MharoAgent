@@ -70,6 +70,7 @@ class ToolCall:
 class Completion:
     """Ek complete response — text + tool_calls + usage."""
 
+    provider: str = ""
     model: str = ""
     text: str = ""
     tool_calls: list = field(default_factory=list)  # [{id,name,arguments}]

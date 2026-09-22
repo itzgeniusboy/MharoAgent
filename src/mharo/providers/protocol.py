@@ -63,6 +63,7 @@ class Provider(abc.ABC):
         self.name = settings.name
         self.model = settings.model
         self.api_key = settings.api_key
+        self.keys: list[str] = [settings.api_key] if settings.api_key else []
         self.base_url = settings.base_url
         self.timeout_s = settings.timeout_s
         self.alive: bool = True
@@ -70,6 +71,12 @@ class Provider(abc.ABC):
         self._max_output: int = DEFAULT_MAX_OUTPUT.get(
             self.model, 4096
         )
+
+    async def set_api_key(self, key: str) -> None:
+        """Multi-key rotation: Router jab naya key deta hai to yahi session
+        swap karta hai — lingering connection ke paas purana key nahi."""
+        self.api_key = key
+        self.keys = [key]
 
     @property
     def max_output(self) -> int:
