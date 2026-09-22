@@ -33,4 +33,5 @@ def test_main_missing_key_returns_2(capsys):
     for k in ("OPENAI_API_KEY", "OPENAI_KEY", "DEEPSEEK_API_KEY"):
         os.environ.pop(k, None)
     assert cli.main(["--env", "/nonexistent.env"]) == 2
-    assert "error: no API key found" in capsys.readouterr().out
+    err = capsys.readouterr().err
+    assert "error: no API key found" in err
