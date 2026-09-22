@@ -29,6 +29,9 @@ python -m mharo -v                       # provider/stats per turn
 
 `.env` file is also supported: `OPENAI_API_KEY=sk-...`.
 
+**No key? No problem.** `python -m mharo` runs in local demo mode with a
+built-in `LocalProvider` — everyone can try the CLI instantly.
+
 ## Use as a library
 
 ```python
