@@ -37,3 +37,10 @@ Naam: Mharo Agent · CLI: `ma` · Project: ~/opencode/MharoAgent
 - Real fix: engine.stats.fallbacks ab router se sync hota hai (respond() me).
 - Removed dead _sse stub in stream.py. 65 pytest, CI green (pytest step has live SSE test).
 - Baaki: real OpenAI/Deepseek public API live test — user key chahiye (.env: OPENAI_API_KEY).
+
+## 2026-09-22 (late2) — Provider catalog v0.3 ready
+- mharo/providers/catalog.py: 13 providers data-driven (zen, openrouter, openai, deepseek, groq, together, cerebras, mistral, gemini, xai, cohere, fireworks, sambanova). Keys: env -> .env -> opencode auth.json auto-detect.
+- openai_compat: 4xx ab ProviderError/AuthError me surface (404 free-slug error pehle chup tha).
+- Google OpenRouter `:free` slug retire ho gaya; naya default `openrouter/free` meta-slug (24 live free models dekhe).
+- Live finding: opencode ki internal openrouter key direct use reject (AuthError); Zen endpoint 403 FreeTierError (free tier sirf opencode ke andar). Asli live ke liye user apna sk-or-v1-... ya zen API key (.env) de.
+- Hermetic tests (conftest) — CI/device env leak-free. 73 pytest green.
