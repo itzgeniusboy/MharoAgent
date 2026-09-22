@@ -14,23 +14,5 @@ jobs:
       - name: import contract
         run: |-
           PYTHONPATH=src python -c 'import mharo.providers.openai_compat, mharo.providers.types, mharo.core.router, mharo.core.engine; print("IMPORTS_OK")'
-      - name: runtime contract meta
-        run: |-
-          PYTHONPATH=src python -c 'from mharo.providers.openai_compat import OpenAICompatible as O
-from mharo.providers.types import Message as M, Usage as U
-from mharo.core.router import Router
-from mharo.core.engine import Engine
-import asyncio
-
-async def m():
-    r = Router([O("openai", "gpt-4o-mini", "k1"), O("deepseek", "deepseek-chat", "k2")], strategy="cost")
-    p = r.pick()
-    assert p.name in {"openai", "deepseek"}
-    w = Engine(r).window([M(role="user", content="hi")], 10)
-    assert w and w[-1].role == "user"
-    u = U(inp=10, out=5)
-    assert u.total == 15
-    print("CONTRACT_OK", p.name, len(w), u.total)
-    await r.close()
-
-asyncio.run(m())'
+      - name: runtime contract script
+        run: PYTHONPATH=src python -m mharo._contract
