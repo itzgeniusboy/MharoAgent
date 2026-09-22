@@ -58,14 +58,14 @@ class SkillRunner:
             names.append(self.load_file(py).name)
         return names
 
-    def run(self, name: str, fn: str, **kwargs: Any) -> Any:
+    def run(self, skill_name: str, fn: str, **kwargs: Any) -> Any:
         with self._lock:
-            skill = self._skills.get(name)
+            skill = self._skills.get(skill_name)
             if skill is None:
-                raise KeyError(f"skill not loaded: {name}")
+                raise KeyError(f"skill not loaded: {skill_name}")
             callable_fn = skill.env.get(fn)
             if not callable(callable_fn):
-                raise KeyError(f"{name}.{fn} not found")
+                raise KeyError(f"{skill_name}.{fn} not found")
         result = callable_fn(**kwargs)
         if hasattr(result, "__await__"):
             import asyncio
