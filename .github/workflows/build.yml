@@ -2,12 +2,13 @@ name: CI
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: smoke
-        run: echo "CI_GREEN_TARGET"
+      - name: compile all modules
+        run: python -m compileall -q -f src/mharo
+      - name: import contract
+        run: |-
+          PYTHONPATH=src python -c 'import mharo.providers.openai_compat, mharo.providers.types, mharo.core.router, mharo.core.engine; print("IMPORTS_OK")'
