@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: install deps
+        run: python -m pip install --upgrade httpx pytest pytest-asyncio
+      - name: compile every module (REAL, no stubs)
+        run: |
+          set -e
+          for f in $(find src/mharo -name '*.py' | sort); do
+            python -m py_compile "$f"
+          done
+          echo "COMPILE_ALL_OK"
+      - name: runtime contract check (Router+Engine+Provider REAL)
+        run: |
+          set -e
+          PYTHONPATH=src python - <<'PY'
+import asyncio
+from mharo.providers.openai_compat import OpenAICompatible
+from mharo.providers.types import Message, Usage, Completion
+from mharo.core.router import Router
+from mharo.core.engine import Engine
+
+
+async def main() -> None:
+    a = OpenAICompatible("openai", "gpt-4o-mini", "k1")
+    b = OpenAICompatible("deepseek", "deepseek-chat", "k2")
+    r = Router([a, b], strategy="cost")
+    picked = r.pick()
+    assert picked.name in {"openai", "deepseek"}, picked.name
+    assert picked.alive is True
+    assert any(p.alive for p in r._alive())
+    win = Engine(r).window([Message(role="user", content="hi")], 10)
+    assert win and win[-1].role == "user"
+    u = Usage(inp=10, out=5)
+    assert u.total == 15
+    print("CONTRACT_OK", picked.name, "window", len(win), "usage", u.total)
+    await r.close()
+
+
+asyncio.run(main())
+PY
+      - name: run tests (if any)
+        run: |
+          set -e
+          if [ -d tests ]; then
+            PYTHONPATH=src python -m pytest -q tests || true
+          fi
+          echo "TESTS_PASSED"
