@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: install deps
+        run: python -m pip install -q httpx
       - name: compile all modules
         run: python -m compileall -q -f src/mharo
       - name: import contract
