@@ -16,5 +16,7 @@ jobs:
           PYTHONPATH=src python -c 'import mharo.providers.openai_compat, mharo.providers.types, mharo.core.router, mharo.core.engine; print("IMPORTS_OK")'
       - name: runtime contract script
         run: PYTHONPATH=src python -m mharo._contract
+      - name: end-to-end smoke
+        run: python scripts/smoke.py
       - name: pytest
         run: PYTHONPATH=src python -m pytest -q tests
