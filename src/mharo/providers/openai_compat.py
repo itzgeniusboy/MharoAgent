@@ -13,6 +13,7 @@ from typing import Any, Optional
 import httpx
 
 from .errors import (
+    AuthError,
     ProviderError,
     RateLimitError,
     TimeoutError2,
@@ -84,8 +85,22 @@ class OpenAICompatible(Provider):
         ) as resp:
             if resp.status_code == 429:
                 raise RateLimitError(f"{self.name} 429", provider=self.name)
-            if resp.status_code >= 500:
-                raise ProviderError(f"{self.name} {resp.status_code}", provider=self.name)
+            if resp.status_code >= 400:
+                detail = ""
+                try:
+                    body = await resp.aread()
+                    detail = json.loads(body).get("error", {}).get("message", "") or ""
+                except Exception:
+                    detail = ""
+                detail = (detail or f"HTTP {resp.status_code}")[:300]
+                if resp.status_code in (401, 403):
+                    raise AuthError(
+                        f"{self.name} auth: {detail}", provider=self.name
+                    )
+                raise ProviderError(
+                    f"{self.name} http {resp.status_code}: {detail}",
+                    provider=self.name,
+                )
             async for line in sse_lines(resp):
                 if not line:
                     continue

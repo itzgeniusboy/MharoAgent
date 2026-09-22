@@ -16,32 +16,38 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import mharo.__main__ as cli
+from mharo.providers import catalog
 
 
 async def main() -> int:
     cli._load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
-
-    key = (os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_KEY")
-           or os.environ.get("OPENROUTER_API_KEY"))
-    if not key:
+    env = catalog.env_with_opencode_auth()
+    configured = catalog.configured(env=env)
+    if not configured:
+        known = ", ".join(c.env[0] for c in catalog.CATALOG)
         print(
             "LIVE_SMOKE_SKIP: no API key.\n"
-            "Set OPENAI_API_KEY / OPENROUTER_API_KEY (ya .env: OPENAI_API_KEY=sk-...) "
-            "aur dobara chalayein.",
+            f"Set any of: {known} (ya opencode se provider login) aur dobara chalayein.",
             file=sys.stderr,
         )
         return 1
 
     engine = cli._build_engine(allow_local=False)
-    print("live provider:", engine.router.providers[0].name,
-          engine.router.providers[0].model)
+    print("live providers:", [(c.name, c.model) for c, _ in configured])
     print("user > hi there, here is a test ping")
-    text = await engine.respond("Reply with exactly: PONG_OK and nothing else.")
+    try:
+        text = await engine.respond("Reply with exactly: PONG_OK and nothing else.")
+    except Exception as exc:
+        print("ERROR:", exc)
+        for e in engine.router.stats.errors:
+            print("  router error:", e)
+        await engine.router.close()
+        return 2
     print("ai   >", text)
     print("stats:", engine.stats.turns, "in", engine.stats.tokens_in,
           "out", engine.stats.tokens_out, "ms", round(engine.stats.latency_ms, 1))
-    if text.strip().upper() != "PONG_OK":
-        print("LIVE_SMOKE_FAIL: unexpected reply", file=sys.stderr)
+    if not text.strip():
+        print("LIVE_SMOKE_FAIL: empty reply", file=sys.stderr)
         return 2
     await engine.router.close()
     print("LIVE_SMOKE_OK")

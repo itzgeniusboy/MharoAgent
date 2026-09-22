@@ -28,44 +28,27 @@ def _load_dotenv(path: str = ".env") -> None:
 def _build_engine(allow_local: bool = True) -> "Engine":
     from mharo.core.engine import Engine
     from mharo.core.router import Router
+    from mharo.providers import catalog
     from mharo.providers.local import LocalProvider
     from mharo.providers.openai_compat import OpenAICompatible
 
     providers = []
+    env = catalog.env_with_opencode_auth()
 
-    openai_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_KEY")
-    if openai_key:
-        base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-        providers.append(OpenAICompatible("openai", model, openai_key, base_url=base_url))
-
-    or_key = os.environ.get("OPENROUTER_API_KEY")
-    if or_key:
-        or_model = os.environ.get("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3:free")
+    for cfg, key in catalog.configured(env=env):
         providers.append(
             OpenAICompatible(
-                "openrouter", or_model, or_key,
-                base_url=os.environ.get(
-                    "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
-                ),
-            )
-        )
-
-    deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
-    if deepseek_key:
-        model = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
-        providers.append(
-            OpenAICompatible(
-                "deepseek", model, deepseek_key,
-                base_url="https://api.deepseek.com/v1",
+                cfg.name, cfg.model, key,
+                base_url=cfg.resolved_base_url(env),
             )
         )
 
     if not providers:
         if not allow_local:
+            known = ", ".join(c.env[0] for c in catalog.CATALOG)
             raise RuntimeError(
-                "no API key found — set OPENAI_API_KEY / OPENROUTER_API_KEY "
-                "or DEEPSEEK_API_KEY (or write keys in .env)"
+                "no API key found — set any of: " + known
+                + " (ya opencode se provider login karein; .env bhi chalega)"
             )
         providers.append(LocalProvider())
 
