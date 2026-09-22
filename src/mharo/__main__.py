@@ -25,9 +25,10 @@ def _load_dotenv(path: str = ".env") -> None:
         pass
 
 
-def _build_engine() -> "Engine":
+def _build_engine(allow_local: bool = True) -> "Engine":
     from mharo.core.engine import Engine
     from mharo.core.router import Router
+    from mharo.providers.local import LocalProvider
     from mharo.providers.openai_compat import OpenAICompatible
 
     providers = []
@@ -49,10 +50,12 @@ def _build_engine() -> "Engine":
         )
 
     if not providers:
-        raise RuntimeError(
-            "no API key found — set OPENAI_API_KEY or DEEPSEEK_API_KEY "
-            "(or write keys in .env)"
-        )
+        if not allow_local:
+            raise RuntimeError(
+                "no API key found — set OPENAI_API_KEY or DEEPSEEK_API_KEY "
+                "(or write keys in .env)"
+            )
+        providers.append(LocalProvider())
 
     return Engine(Router(providers, strategy=os.environ.get("MHARO_STRATEGY", "cost")))
 
@@ -102,11 +105,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     _load_dotenv(args.env)
-    try:
-        engine = _build_engine()
-    except RuntimeError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
+    engine = _build_engine(allow_local=True)
+    if engine.router.providers[0].name == "local":
+        print("(local mode — no API key. Set OPENAI_API_KEY for real AI.)")
 
     return asyncio.run(_run_interactive(engine, args.verbose))
 

@@ -6,11 +6,19 @@ import pytest
 import mharo.__main__ as cli
 
 
-def test_no_key_missing_raises(monkeypatch):
+def test_no_key_gets_local_mode(monkeypatch):
+    for k in ("OPENAI_API_KEY", "OPENAI_KEY", "DEEPSEEK_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    eng = cli._build_engine(allow_local=True)
+    assert len(eng.router.providers) == 1
+    assert eng.router.providers[0].name == "local"
+
+
+def test_local_disabled_raises(monkeypatch):
     for k in ("OPENAI_API_KEY", "OPENAI_KEY", "DEEPSEEK_API_KEY"):
         monkeypatch.delenv(k, raising=False)
     with pytest.raises(RuntimeError):
-        cli._build_engine()
+        cli._build_engine(allow_local=False)
 
 
 def test_openai_key_builds_engine(monkeypatch):
@@ -28,10 +36,14 @@ def test_dotenv_loader():
     assert cli._load_dotenv("/nonexistent/.env") is None
 
 
-def test_main_missing_key_returns_2(capsys):
+def test_main_without_key_starts_local(monkeypatch, capsys):
     import os
+
     for k in ("OPENAI_API_KEY", "OPENAI_KEY", "DEEPSEEK_API_KEY"):
         os.environ.pop(k, None)
-    assert cli.main(["--env", "/nonexistent.env"]) == 2
-    err = capsys.readouterr().err
-    assert "error: no API key found" in err
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda *a, **k: (_ for _ in ()).throw(EOFError()),
+    )
+    assert cli.main(["--env", "/nonexistent.env"]) == 0
+    assert "local mode" in capsys.readouterr().out
