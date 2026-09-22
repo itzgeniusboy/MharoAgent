@@ -43,6 +43,10 @@ class Engine:
         base = [Message(role="system", content=self.system)] if self.system else []
         return base + messages[-self.history_limit:]
 
+    def window(self, messages: list[Message]) -> list[Message]:
+        """Public window API — REAL alias to context window logic."""
+        return self._window(messages)
+
     async def respond(self, user_text: str, temperature: float = 0.2) -> str:
         """Ek user turn -> Router.complete -> assistant text. REAL async path."""
         started = time.monotonic()
