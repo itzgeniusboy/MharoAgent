@@ -30,13 +30,34 @@ class Engine:
     """Conversation loop — history window + router call. Router REAL provider pool."""
 
     def __init__(self, router, system: str = "", history_limit: int = 40,
-                 model: str = "openai") -> None:
+                 model: str = "openai", tools: Optional[dict] = None) -> None:
         self.router = router
         self.system = system
         self.history_limit = history_limit
         self.model = model
+        self.tools: Optional[dict] = tools
         self.history: list[Message] = []
         self.stats = SessionStats()
+
+    def _tool_schemas(self) -> Optional[list[dict]]:
+        if not self.tools:
+            return None
+        return [t.schema() for t in self.tools.values()]
+
+    async def call_tool(self, name: str, arguments: dict) -> str:
+        """Ek tool call execute — returns JSON-able string result."""
+        import json
+
+        if not self.tools or name not in self.tools:
+            raise ProviderError(f"engine: unknown tool {name!r}")
+        try:
+            result = await self.tools[name].run(**arguments)
+        except Exception as exc:
+            result = {"error": str(exc)}
+        if not isinstance(result, (str, int, float, bool)):
+            result = json.dumps(result, ensure_ascii=False)
+        self.history.append(Message(role="tool", content=str(result), name=name))
+        return str(result)
 
     def _window(self, messages: list[Message]) -> list[Message]:
         """System prompt + recent history_limit messages (context budget)."""
