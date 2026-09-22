@@ -23,3 +23,11 @@ Naam: Mharo Agent · CLI: `ma` · Project: ~/opencode/MharoAgent
 - Engine tool-use wiring: Engine.tools registry, call_tool() (result -> tool msg in history), _tool_schemas() (OpenAI function schema). +5 tests.
 - LocalProvider (zero-key demo) keyless mode: openssl se saaf, bina key ke bhi python -m mharo chalta hai (Router contract REAL). +tests, CI green.
 - Baaki: plugins/tui/dashboard/appmode/security empty packages, memory wiring chat loop me, skills ka real example file, live chat smoke w/ real key, version bump+tag.
+## 2026-09-22 (v0.2.0 release)
+- Security: Redactor (known secrets + sk-... patterns masking).
+- Plugins: PluginManager (load dir -> enable -> invoke), 5 tests.
+- TUI (Termux-safe banner/status/box, no-TTY safe), Dashboard render, appmode single-shot runner.
+- skills/greet.py real example; repo integration test.
+- scripts/smoke.py end-to-end (Engine->Router->LocalProvider) — CI step add hua.
+- v0.2.0 tag pushed. 63 tests CI green. Un-tracked pyc binaries.
+- NOTE: rebase se pehle hamesha git rm --cached pyc (tracked binaries), sirf pyproject/README/gitignore/skills/scripts add karna.

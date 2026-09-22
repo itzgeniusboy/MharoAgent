@@ -58,9 +58,16 @@ reply = await engine.respond("hello")
 | --- | --- |
 | `mharo/providers/` | errors, types, protocol (Provider ABC + multi-key), SSE stream parser, `OpenAICompatible` httpx client |
 | `mharo/core/router.py` | key-rotation (429/401 -> next key), provider fallback, stats |
-| `mharo/core/engine.py` | session history + window, Router call, per-session stats |
+| `mharo/core/engine.py` | session history + window, Router call, tool-use loop, per-session stats |
+| `mharo/providers/local.py` | zero-key `LocalProvider` demo mode |
 | `mharo/tools/` | Tool registry + safe calculator + echo |
 | `mharo/memory/` | persistent JSON KV (TTL, search) |
+| `mharo/skills/` | dynamic SkillRunner + repo `skills/greet.py` example |
+| `mharo/plugins/` | PluginManager (runtime load/enable/invoke) |
+| `mharo/security/` | Redactor (secret + key-like masking) |
+| `mharo/tui/` | Termux-safe banner/status/box (no ANSI unless TTY) |
+| `mharo/dashboard/` | text panel from Engine+Router state |
+| `mharo/appmode/` | single-shot headless runner |
 | `mharo/__main__.py` | `python -m mharo` interactive CLI |
 
 ## Design notes
