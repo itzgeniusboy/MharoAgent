@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: install deps
-        run: python -m pip install -q httpx
+        run: python -m pip install -q httpx pytest pytest-asyncio
       - name: compile all modules
         run: python -m compileall -q -f src/mharo
       - name: import contract
@@ -16,3 +16,5 @@ jobs:
           PYTHONPATH=src python -c 'import mharo.providers.openai_compat, mharo.providers.types, mharo.core.router, mharo.core.engine; print("IMPORTS_OK")'
       - name: runtime contract script
         run: PYTHONPATH=src python -m mharo._contract
+      - name: pytest
+        run: PYTHONPATH=src python -m pytest -q tests
