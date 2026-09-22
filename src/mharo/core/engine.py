@@ -95,5 +95,6 @@ class Engine:
         if comp.usage:
             self.stats.tokens_in += comp.usage.inp
             self.stats.tokens_out += comp.usage.out
+        self.stats.fallbacks = getattr(self.router.stats, "fallbacks", 0)
         self.stats.latency_ms = (time.monotonic() - started) * 1000.0
         return comp.text

@@ -4,8 +4,8 @@ hai har OpenAI-compatible provider ke liye.)"""
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator, Optional
-from dataclasses import dataclass, field
+from typing import Any, Optional
+from dataclasses import dataclass
 
 from .types import Usage
 
@@ -60,11 +60,6 @@ def openai_events(obj: dict, buf: ToolBuffer) -> list[Event]:
     if u:
         out.append(Event("usage", usage=Usage(u.get("prompt_tokens", 0), u.get("completion_tokens", 0))))
     return out
-
-
-async def _sse(path) -> None:
-    pass  # placeholder — real asyncio SSE loop core/loop.py me; kyun? stream.py
-    # sirf parse-model rakhta hai, HTTP lifecycle router ke paas. (comment sandbox mein fix)
 
 
 async def sse_lines(resp):
