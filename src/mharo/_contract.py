@@ -17,8 +17,8 @@ async def m() -> None:
     assert any(q.alive for q in r._alive())
     w = Engine(r).window([Message(role="user", content="hi")], 10)
     assert w and w[-1].role == "user"
-    c = Completion(choices=[], usage=Usage(inp=10, out=5), provider="openai")
-    assert c.model is None
+    c = Completion(model="gpt-4o-mini", text="ok", finish_reason="stop", usage=Usage(inp=10, out=5))
+    assert c.has_tools is False
     print("CONTRACT_OK", p.name, len(w), c.usage.total)
 
 
