@@ -31,3 +31,9 @@ Naam: Mharo Agent · CLI: `ma` · Project: ~/opencode/MharoAgent
 - scripts/smoke.py end-to-end (Engine->Router->LocalProvider) — CI step add hua.
 - v0.2.0 tag pushed. 63 tests CI green. Un-tracked pyc binaries.
 - NOTE: rebase se pehle hamesha git rm --cached pyc (tracked binaries), sirf pyproject/README/gitignore/skills/scripts add karna.
+## 2026-09-22 (v0.2.x) — LIVE SSE verified
+- tests/test_live_sse.py: real ThreadingHTTPServer serving OpenAI-format SSE over HTTP; OpenAICompatible (raw httpx stream + sse_lines) -> text "hello there", finish stop, usage 8/3. PASS.
+- Live 429 fallback: server rate-limit-me -> RateLimitError -> Router -> LocalProvider. PASS.
+- Real fix: engine.stats.fallbacks ab router se sync hota hai (respond() me).
+- Removed dead _sse stub in stream.py. 65 pytest, CI green (pytest step has live SSE test).
+- Baaki: real OpenAI/Deepseek public API live test — user key chahiye (.env: OPENAI_API_KEY).
