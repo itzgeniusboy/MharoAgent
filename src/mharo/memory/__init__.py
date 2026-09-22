@@ -32,6 +32,9 @@ class Memory:
             self._data = {}
 
     def _save(self) -> None:
+        parent = os.path.dirname(self.path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         tmp = self.path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(self._data, fh, indent=2)

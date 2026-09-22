@@ -36,7 +36,32 @@ def test_dotenv_loader():
     assert cli._load_dotenv("/nonexistent/.env") is None
 
 
-def test_main_without_key_starts_local(monkeypatch, capsys):
+def test_memory_context_empty_and_populated(tmp_path):
+    from mharo.memory import Memory
+
+    mem = Memory(str(tmp_path / "m.json"))
+    assert cli.memory_context(mem) == ""
+    mem.set("fact.city", "jaipur")
+    mem.set("user.name", "mharo")
+    ctx = cli.memory_context(mem)
+    assert "fact.city: jaipur" in ctx
+    assert "user.name" not in ctx  # prefix filter fact.
+    assert ctx.startswith("Remembered facts:")
+
+
+def test_handle_remember_recall_forget(tmp_path):
+    from mharo.memory import Memory
+
+    mem = Memory(str(tmp_path / "m.json"))
+    assert cli.handle_special("/remember note=hello", mem) == "remembered note"
+    assert cli.handle_special("/remember bad", mem).startswith("usage:")
+    assert cli.handle_special("/recall", mem) == "note: hello"
+    assert cli.handle_special("/forget note", mem) == "forgot note"
+    assert cli.handle_special("/forget note", mem).startswith("no key")
+    assert cli.handle_special("plain", mem) is None
+
+
+def test_main_without_key_starts_local(tmp_path, monkeypatch, capsys):
     import os
 
     for k in ("OPENAI_API_KEY", "OPENAI_KEY", "DEEPSEEK_API_KEY"):
@@ -45,5 +70,7 @@ def test_main_without_key_starts_local(monkeypatch, capsys):
         "builtins.input",
         lambda *a, **k: (_ for _ in ()).throw(EOFError()),
     )
-    assert cli.main(["--env", "/nonexistent.env"]) == 0
-    assert "local mode" in capsys.readouterr().out
+    assert cli.main(["--env", "/nonexistent.env",
+                     "--memory", str(tmp_path / "m.json")]) == 0
+    out = capsys.readouterr().out
+    assert "local mode" in out

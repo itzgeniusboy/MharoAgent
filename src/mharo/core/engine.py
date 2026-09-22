@@ -59,9 +59,10 @@ class Engine:
         self.history.append(Message(role="tool", content=str(result), name=name))
         return str(result)
 
-    def _window(self, messages: list[Message]) -> list[Message]:
+    def _window(self, messages: list[Message], extra_system: str = "") -> list[Message]:
         """System prompt + recent history_limit messages (context budget)."""
-        base = [Message(role="system", content=self.system)] if self.system else []
+        content = extra_system or self.system
+        base = [Message(role="system", content=content)] if content else []
         return base + messages[-self.history_limit:]
 
     def window(self, messages: list[Message], limit: Optional[int] = None) -> list[Message]:
@@ -71,13 +72,19 @@ class Engine:
         base = [Message(role="system", content=self.system)] if self.system else []
         return base + messages[-limit:]
 
-    async def respond(self, user_text: str, temperature: float = 0.2) -> str:
+    async def respond(
+        self,
+        user_text: str,
+        temperature: float = 0.2,
+        extra_system: str = "",
+    ) -> str:
         """Ek user turn -> Router.complete -> assistant text. REAL async path."""
         started = time.monotonic()
         self.history.append(Message(role="user", content=user_text))
         try:
             comp = await self.router.complete(
-                self._window(self.history), temperature=temperature
+                self._window(self.history, extra_system=extra_system),
+                temperature=temperature,
             )
         except ProviderError as exc:
             self.stats.errors.append(str(exc))

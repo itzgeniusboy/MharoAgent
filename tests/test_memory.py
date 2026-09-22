@@ -58,3 +58,10 @@ def test_bad_file_recovers(tmp_path):
     assert m.get("anything") is None
     m.set("ok", 1)
     assert json.loads(p.read_text())["ok"]["value"] == 1
+
+
+def test_creates_parent_dir(tmp_path):
+    p = tmp_path / "nested" / "deep" / "mem.json"
+    m = Memory(str(p))
+    m.set("a", 1)
+    assert Memory(str(p)).get("a") == 1
