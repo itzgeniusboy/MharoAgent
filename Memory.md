@@ -22,4 +22,5 @@
 
 ## Open Questions
 - Kya free providers (ovh/demo ladder) production use ke liye enough hain, ya API key chahiye.
-- Old MharoAgent vs new engine-tui ka kya fate — merge karna hai ya dono alag rahenge.
+- Old MharoAgent vs new engine-tui ka kya fate — merge karna hai ya dono alag rahenge.- 2026-09-24: `MharoAgent-engine-tui-fixed.zip` sync — TUI layer fixes: real boxed UI hamesha try hota hai (no TTY/Textual crash pe hi plain fallback), topbar mein `MHARO v0.1.0` + live ready/busy dot (●/○), plain header naya (`MHARO v0.1.0 ● ready` + `➜` prompt). `/tmp`→`$TMPDIR` fixes dobara applied (fixed zip mein bhi /tmp hardcoded tha). Tests 101/101, doctor healthy.
+- ~/.bashrc mein mharo function ab new engine-tui binary (`/usr/bin/mharo`) ko call karta hai — purana MharoAgent v0.3.15 `~/opencode/MharoAgent/./mharo` se available.
