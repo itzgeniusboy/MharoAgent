@@ -286,6 +286,21 @@ class NoticeBlock(Static):
 class Welcome(Static):
     """Shown while the transcript is empty."""
 
+    ART = (
+        r"█   █ █   █  ███  ████   ███ ",
+        r"██ ██ █   █ █   █ █   █ █   █",
+        r"█ █ █ █████ █████ ████  █   █",
+        r"█   █ █   █ █   █ █  █  █   █",
+        r"█   █ █   █ █   █ █   █  ███ ",
+    )
+    ART2 = (
+        r" ███   ███  █████ █   █ █████",
+        r"█   █ █     █     ██  █   █  ",
+        r"█████ █  ██ ████  █ █ █   █  ",
+        r"█   █ █   █ █     █  ██   █  ",
+        r"█   █  ███  █████ █   █   █  ",
+    )
+
     def __init__(self, lines: list[str]) -> None:
         self.lines = lines
         super().__init__()
@@ -293,7 +308,11 @@ class Welcome(Static):
     def render(self) -> RichText:
         out = RichText(no_wrap=True)
         out.append("\n")
-        out.append("  M H A R O   A G E N T\n", style=pal(self, "bold $primary"))
+        for line in self.ART:
+            out.append("  " + line + "\n", style=pal(self, "bold $primary"))
+        out.append("\n")
+        for line in self.ART2:
+            out.append("  " + line + "\n", style=pal(self, "bold $primary"))
         out.append("\n")
         for line in self.lines:
             out.append(f"  {line}\n", style="dim")
