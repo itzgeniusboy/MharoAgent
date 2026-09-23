@@ -14,6 +14,7 @@ This is also what `ma doctor` runs, and what CI should gate on:
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import time
 from dataclasses import dataclass
@@ -30,7 +31,7 @@ from .providers import ProviderHub, TierHandle
 from .sessiondb import SessionDB
 from .vault import Vault
 
-ROOT = Path("/tmp/mharo-bench")
+ROOT = Path(os.environ.get("TMPDIR", "/tmp")) / "mharo-bench"
 
 
 @dataclass

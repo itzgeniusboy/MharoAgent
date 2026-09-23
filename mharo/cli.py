@@ -1028,7 +1028,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     b = shared("bench", "run the engine benchmark (10 scenarios, offline, deterministic)")
     b.add_argument("--only", help="substring filter on scenario name")
-    b.add_argument("--keep", action="store_true", help="keep /tmp/mharo-bench to inspect")
+    b.add_argument("--keep", action="store_true", help="keep $TMPDIR/mharo-bench to inspect")
     b.add_argument("--json", action="store_true")
     b.set_defaults(func=cmd_bench)
 

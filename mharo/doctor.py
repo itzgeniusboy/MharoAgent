@@ -447,7 +447,7 @@ class Doctor:
         from .engine import Engine, EngineSettings
         from .providers import ProviderHub
 
-        tmp = Path("/tmp/mharo-doctor")
+        tmp = Path(os.environ.get("TMPDIR", "/tmp")) / "mharo-doctor"
         tmp.mkdir(exist_ok=True)
         (tmp / "hello.py").write_text("def hi():\n    return 'hi'\n", encoding="utf-8")
         cfg = Config.load()
