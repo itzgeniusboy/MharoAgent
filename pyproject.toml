@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mharo-tui"
+version = "0.1.0"
+description = "Mharo: a professional terminal UI for AI coding agents plus the Phase 1 core engine (`ma`) — plan, act with tools, verify with proof."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "itzgeniusboy" }]
+keywords = ["tui", "agent", "ai", "terminal", "textual", "coding-agent", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: User Interfaces",
+]
+dependencies = [
+    "textual>=0.86",
+    "rich>=13.7",
+    "httpx>=0.27",
+]
+# The engine itself (`ma`) is stdlib-only: sqlite3 + asyncio + urllib/httpx via
+# mharo_tui.providers. `mharo[dev]` adds the test/lint tooling.
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6"]
+
+[project.scripts]
+mharo = "mharo_tui.__main__:main"
+ma = "mharo.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/itzgeniusboy/MharoAgent"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mharo_tui", "mharo"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"mharo_tui/app.tcss" = "mharo_tui/app.tcss"
+"skills" = "mharo/_skills"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
