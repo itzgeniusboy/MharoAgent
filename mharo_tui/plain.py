@@ -135,12 +135,16 @@ async def run(
         agent = Agent(config, on_event=_emit, session=session)
     agent.request_approval = None if config.auto_approve else stdin_approver
 
-    console.print(
-        Text.assemble(
-            ("✳ mharo  ", "bold bright_blue"),
-            (f"{getattr(agent.provider, 'describe', lambda: agent.provider.name)()} · {agent.ctx.cwd}", "dim"),
-        )
-    )
+    from . import __version__
+
+    header = Text()
+    header.append(" MHARO ", style="bold #f0997b")
+    header.append(f"v{__version__}", style="dim")
+    header.append("   ")
+    header.append("● ready", style="bold green")
+    header.append(f"   {getattr(agent.provider, 'describe', lambda: agent.provider.name)()} · {agent.ctx.cwd}", style="dim")
+    console.print(header)
+    console.print(Rule(style="dim"))
     if config.auto_approve:
         console.print("[yellow]auto-approve is ON — edits and commands run without asking[/]")
 
@@ -153,8 +157,10 @@ async def run(
 
     console.print("[dim]type /help for commands · ctrl+d or /quit to exit[/]")
     while interactive:
+        console.print()
+        console.print(Rule(style="dim"))
         try:
-            text = console.input("[bold blue]❯ [/]").strip()
+            text = console.input("[bold green]➜ [/]").strip()
         except (EOFError, KeyboardInterrupt):
             console.print()
             break

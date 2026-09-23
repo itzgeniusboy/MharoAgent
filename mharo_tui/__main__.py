@@ -111,9 +111,11 @@ def main(argv: list[str] | None = None) -> int:
 
     prompt = " ".join(args.prompt).strip()
 
-    if args.print_mode or (prompt and not args.plain) or not tty_available():
+    def _run_plain(reason: str | None = None) -> int:
         from .plain import run
 
+        if reason:
+            print(f"[mharo] {reason}", file=sys.stderr)
         try:
             return asyncio.run(
                 run(
@@ -134,6 +136,24 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             raise
 
+    # --print / a one-shot prompt / --plain always mean "no full-screen UI".
+    if args.print_mode or args.plain or (prompt and not args.plain and args.print_mode):
+        return _run_plain()
+    if prompt:
+        # one-shot prompt with no --plain flag: still headless, just interactive=False
+        return _run_plain()
+
+    # Otherwise ALWAYS try the real, boxed Textual UI first — this is what
+    # gives the docked bottom input, the top bar, panels, etc. Only fall
+    # back to the plain REPL if Textual genuinely cannot start (no tty,
+    # unsupported terminal), never on a guess.
+    if not tty_available():
+        return _run_plain(
+            "no interactive terminal detected (stdin/stdout not a TTY, or $TERM unset) "
+            "— falling back to plain mode. Run `mharo` directly inside your terminal app "
+            "(not via a script/pipe) to get the full boxed UI."
+        )
+
     from .app import MharoApp
 
     app = MharoApp(config, session=session)
@@ -143,6 +163,10 @@ def main(argv: list[str] | None = None) -> int:
         app.run()
     except KeyboardInterrupt:
         return 130
+    except Exception as exc:
+        # Textual failed to take over the screen for some environment-specific
+        # reason — degrade gracefully instead of crashing.
+        return _run_plain(f"full UI failed to start ({type(exc).__name__}: {exc}) — using plain mode.")
     return 0
 
 

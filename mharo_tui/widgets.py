@@ -115,21 +115,24 @@ class TopBar(Horizontal):
         super().__init__(self.left, self.right, **kwargs)
 
     def _paint(self) -> None:
+        from . import __version__
+
         left = RichText(no_wrap=True)
-        left.append(f" {BRAND} mharo ", style=pal(self, "bold $primary"))
-        left.append(f"│ {self.backend}", style="dim")
-        left.append(f" · {self.model}", style="")
+        left.append(f" {BRAND} MHARO ", style=pal(self, "bold $primary"))
+        left.append(f"v{__version__}", style="dim")
         if self.branch and self.branch != "no-git":
-            left.append(f" │ ⎇ {self.branch}", style="bold")
+            left.append(f"  │ ⎇ {self.branch}", style="bold")
             if self.dirty:
                 left.append(f" ✱{self.dirty}", style=pal(self, "$warning"))
         if self.path:
-            left.append(f" │ {self.path}", style="dim")
+            left.append(f"  │ {self.path}", style="dim")
         right = RichText(no_wrap=True)
-        right.append("   ", style="dim")
-        parts = [p for p in (self.gauge, self.cost, self.state) if p]
-        for i, part in enumerate(parts):
-            right.append(("  ·  " if i else "") + part, style="dim" if i == 0 else "dim")
+        ready = "●" if self.state not in ("thinking", "busy") else "○"
+        right.append(f"{ready} {self.backend} · {self.model}", style=pal(self, "$success") if ready == "●" else "dim")
+        parts = [p for p in (self.gauge, self.cost) if p]
+        for part in parts:
+            right.append("  ·  " + part, style="dim")
+        right.append("  ", style="dim")
         self.left.update(left)
         self.right.update(right)
 
