@@ -81,17 +81,57 @@ def pal(widget, spec: str) -> str:
 
 
 def fuzzy(needle: str, haystack: str) -> bool:
-    """Subsequence match — same behaviour the palette needs, zero deps."""
+    """Subsequence match (bool form — used by shortcut/hint listeners)."""
+    return fuzzy_score(needle, haystack) >= 0
+
+
+def fuzzy_score(needle: str, haystack: str) -> int:
+    """Ranked subsequence match for the palette.
+
+    Higher is better. Rewards: prefix alignment (biggest), early landing spots,
+    and gaps between picks. Returns -1 when the needle never fits in order —
+    callers treat anything < 0 as "no match"; the palette sorts descending.
+    """
     if not needle:
-        return True
+        return 0
     needle, hay = needle.lower(), haystack.lower()
+    base = hay.lstrip("/")          # commands are "/name help_": leading slash is chrome
+    score = -1
+    last = -1
+    for rank, char in enumerate(needle):
+        pos = hay.find(char, last + 1)
+        if pos < 0:
+            return -1
+        gap = pos - last - 1
+        if rank == 0:
+            prefix = (
+                900 if base.startswith(needle)
+                else (600 if hay.startswith(char) or base.startswith(char) else 300)
+            )
+            score += prefix
+        elif gap == 0:
+            score += 40  # contiguous run (tight matches win)
+        else:
+            score -= gap  # wandering picks drag the score down
+        last = pos
+    return score + 8 - last  # earlier placement of the final char wins ties
+
+
+def fuzzy_positions(needle: str, haystack: str) -> list[int]:
+    """Indices of the palae-shaped chars in `haystack`, so the palette can
+    paint matched spans in bold primary instead of dimming the whole help."""
+    if not needle:
+        return []
+    needle, hay = needle.lower(), haystack.lower()
+    out: list[int] = []
     pos = 0
     for char in needle:
         pos = hay.find(char, pos)
         if pos < 0:
-            return False
+            return out
+        out.append(pos)
         pos += 1
-    return True
+    return out
 
 
 # --------------------------------------------------------------------------- top bar
@@ -613,7 +653,14 @@ class Palette(Container):
 
     def filter(self, needle: str) -> None:
         if needle:
-            rows = [e for e in self.entries if fuzzy(needle, f"{e[0]} {e[1]}")]
+            scored = [
+                (fuzzy_score(needle, f"{name} {help_}"), name, help_)
+                for name, help_ in self.entries
+            ]
+            rows = sorted(
+                ((name, help_) for score, name, help_ in scored if score >= 0),
+                key=lambda item: -fuzzy_score(needle, f"{item[0]} {item[1]}"),
+            )
         else:
             rows = list(self.entries)
         self.visible_rows = rows[:40]
@@ -628,7 +675,25 @@ class Palette(Container):
                     for i, (name, help_) in enumerate(self.visible_rows)
                 ]
             )
+        elif needle:
+            self.results.add_options(
+                [
+                    Option(
+                        RichText(f"  “{needle}”  —  no matching command", style="dim"),
+                        disabled=True,
+                        id="opt-none",
+                    )
+                ]
+            )
         self.results.highlighted = 0 if self.visible_rows else None
+        self._follow()
+
+    def _follow(self) -> None:
+        """Keep the highlighted row in view (narrow palettes, keyboard jumps)."""
+        try:
+            self.results.scroll_to_highlighted()
+        except Exception:
+            pass
 
     def move(self, delta: int) -> None:
         count = len(self.visible_rows)
@@ -636,6 +701,7 @@ class Palette(Container):
             return
         cur = self.results.highlighted or 0
         self.results.highlighted = (cur + delta) % count
+        self._follow()
 
     def current(self) -> str | None:
         idx = self.results.highlighted

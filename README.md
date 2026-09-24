@@ -79,7 +79,9 @@ Environment: `MHARO_PROVIDER`, `MHARO_MODEL`, `MHARO_BASE_URL`,
 - multi-line `TextArea` that grows as you type (Enter sends, Shift+Enter newline)
 - `/` slash-command completion, `@file` mentions inlined as fenced context,
   `!cmd` runs the shell straight through the tool layer (no model round-trip)
-- `ctrl+p` fuzzy palette over commands *and* actions
+- `ctrl+p` palette with a ranked fuzzy matcher: type `/cost` and it lands `/cost`
+  on top, prefix-aligned and contiguous runs win, matched characters are painted
+  in the primary accent; no-match shows a clean empty hint instead of a blank list
 
 **Agent loop**
 - provider → tool call → approval → result → continue, up to `--max-turns`
