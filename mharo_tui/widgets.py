@@ -104,7 +104,6 @@ class TopBar(Horizontal):
     model = reactive("demo")
     branch = reactive("no-git")
     dirty = reactive(0)
-    path = reactive("")
     gauge = reactive("")
     cost = reactive("")
     state = reactive("")
@@ -124,8 +123,6 @@ class TopBar(Horizontal):
             left.append(f"  │ ⎇ {self.branch}", style="bold")
             if self.dirty:
                 left.append(f" ✱{self.dirty}", style=pal(self, "$warning"))
-        if self.path:
-            left.append(f"  │ {self.path}", style="dim")
         right = RichText(no_wrap=True)
         ready = "●" if self.state not in ("thinking", "busy") else "○"
         right.append(f"{ready} {self.backend} · {self.model}", style=pal(self, "$success") if ready == "●" else "dim")
@@ -140,7 +137,6 @@ class TopBar(Horizontal):
     watch_model = watch_backend
     watch_branch = watch_backend
     watch_dirty = watch_backend
-    watch_path = watch_backend
     watch_gauge = watch_backend
     watch_cost = watch_backend
     watch_state = watch_backend

@@ -309,8 +309,6 @@ class MharoApp(App):
         top.model = self.agent.session.model
         top.branch = stats.get("branch", "no-git")
         top.dirty = stats.get("dirty", 0)
-        top.path = _shorten(str(self.agent.ctx.cwd))
-        top.sep = "│" if self.agent.repo.get("git") else "" 
         top.gauge = f"ctx {stats['prompt_tokens']:,}/{stats['window']:,} ({stats['used_pct']:.0f}%)"
         top.cost = f"${stats['cost']:.3f}" if stats["cost"] else ""
         top.state = "working" if self._busy else "" 
@@ -898,8 +896,3 @@ class MharoApp(App):
                 self.agent.session.persist()
         except Exception:
             pass
-
-
-def _shorten(path: str, keep: int = 34) -> str:
-    text = path.replace(str(Path.home()), "~", 1)
-    return text if len(text) <= keep else "…" + text[-keep:]
