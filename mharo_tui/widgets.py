@@ -567,7 +567,7 @@ class CompletionPopup(Static):
 
 
 class Palette(Container):
-    """ctrl+p command palette: fuzzy list of commands + actions."""
+    """ctrl+p command palette: type to fuzzy-filter, ↑↓ to pick, enter to run."""
 
     class Picked(Message):
         def __init__(self, value: str) -> None:
@@ -578,8 +578,13 @@ class Palette(Container):
         self.results = OptionList(id="palette-list")
         self.entries: list[tuple[str, str]] = []
         self.visible_rows: list[tuple[str, str]] = []
+        self.query = ""
+        self.title = Label(
+            RichText("  Commands & actions  —  type to filter · ↑↓ pick · enter run · esc close", style="dim"),
+            classes="palette-title",
+        )
         super().__init__(
-            Label("  Commands & actions   —   ↑↓ pick · enter run · esc close", classes="palette-title"),
+            self.title,
             self.results,
             id="palette",
         )
@@ -591,12 +596,32 @@ class Palette(Container):
 
     def show(self, needle: str = "") -> None:
         self.display = True
+        self.set_query(needle)
+
+    def set_query(self, needle: str) -> None:
+        self.query = needle
         self.filter(needle)
+        self._paint_title()
+
+    def _paint_title(self) -> None:
+        q = self.query.strip().lower()
+        shown = ""
+        if q:
+            shown = f"  ·  filter: {self.query} ({len(self.visible_rows)} match)"
+        self.title.update(
+            RichText(
+                f"  Commands & actions{shown}  —  type to filter · ↑↓ pick · enter run · esc close",
+                style="dim",
+            )
+        )
 
     def filter(self, needle: str) -> None:
-        rows = [e for e in self.entries if fuzzy(needle, f"{e[0]} {e[1]}")] if needle else list(self.entries)
+        if needle:
+            rows = [e for e in self.entries if fuzzy(needle, f"{e[0]} {e[1]}")]
+        else:
+            rows = list(self.entries)
         self.visible_rows = rows[:40]
-        self.results.remove_children()
+        self.results.clear_options()
         if self.visible_rows:
             self.results.add_options(
                 [

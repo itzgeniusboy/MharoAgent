@@ -293,6 +293,36 @@ async def test_slash_commands_and_palette(tmp_path):
         await pilot.pause(0.2)
         assert app._palette_open is False
 
+        # palette type-to-filter
+        app.action_palette()
+        await pilot.pause(0.1)
+        assert app.focused is app.query_one(Palette).results
+        assert len(app.query_one(Palette).visible_rows) > 20, "all entries listed on open"
+        await pilot.press("c", "o", "s", "t")
+        await pilot.pause(0.1)
+        rows = app.query_one(Palette).visible_rows
+        names = [r[0] for r in rows]
+        assert len(names) == 4, f"expected 4 fuzzy matches for cost, got {names}"
+        assert names[0] == "/cost"
+        assert app.query_one(Palette).current() == "/cost"
+        await pilot.press("backspace")
+        await pilot.pause(0.1)
+        assert app._palette_query == "cos"
+        await pilot.press("t")
+        await pilot.pause(0.1)
+        await pilot.press("enter")
+        await pilot.pause(0.2)
+        assert app._palette_open is False
+        assert app._palette_query == "", "query must reset after close"
+        # reopen: empty needle -> full list again
+        await pilot.press("ctrl+p")
+        await pilot.pause(0.1)
+        assert len(app.query_one(Palette).visible_rows) > 20
+        await pilot.press("escape")
+        await pilot.pause(0.1)
+        assert app._palette_open is False
+        assert app._palette_query == ""
+
 
 @pytest.mark.asyncio
 async def test_shell_bang_and_completion_popup(tmp_path):

@@ -134,6 +134,7 @@ class MharoApp(App):
         self._worker: Any = None
         self.mharo_css_vars: dict[str, str] = dict(THEMES[DEFAULT_THEME]["vars"])
         self._palette_open = False
+        self._palette_query = ""
 
     # ------------------------------------------------------------------ layout
 
@@ -499,9 +500,26 @@ class MharoApp(App):
             self._resolve_approval({"y": "once", "a": "always", "n": "deny"}[event.key])
             return
         if self._palette_open:
-            if event.key in {"up", "down", "enter", "escape", "tab", "shift+tab"}:
+            key = event.key
+            if key in {"up", "down", "enter", "escape", "tab", "shift+tab"}:
                 event.stop()
-                self.palette_key(event.key)
+                self.palette_key(key)
+                return
+            query = self._palette_query
+            if key == "backspace":
+                event.stop()
+                self._palette_query = query[:-1]
+                self.palette_refilter()
+                return
+            if key == "space":
+                event.stop()
+                self._palette_query = query + " "
+                self.palette_refilter()
+                return
+            if len(key) == 1 and key.isprintable():
+                event.stop()
+                self._palette_query = query + key
+                self.palette_refilter()
                 return
         if event.key == "tab":
             event.stop()
@@ -580,12 +598,21 @@ class MharoApp(App):
 
     def action_palette(self) -> None:
         palette = self.query_one(Palette)
+        self._palette_query = ""
         entries = [(f"/{c.name} {c.args}".strip(), c.help) for c in COMMANDS.values()]
         entries += [(label, f"action · {name}") for label, name in ACTIONS]
         palette.populate(entries)
         self._palette_open = True
+        try:
+            palette.results.focus()
+        except Exception:
+            pass
+
+    def palette_refilter(self) -> None:
+        self.query_one(Palette).set_query(self._palette_query)
 
     def action_palette_close(self) -> None:
+        self._palette_query = ""
         self.query_one(Palette).display = False
         self._palette_open = False
         try:
