@@ -117,6 +117,21 @@ def fuzzy_score(needle: str, haystack: str) -> int:
     return score + 8 - last  # earlier placement of the final char wins ties
 
 
+def _flag_paint(needle: str, name: str, help_: str) -> RichText:
+    """Paint a palette row with matched spans in bold primary and the rest of
+    the command name in a soft accent — clean and easy to scan at a glance."""
+    hay = f"{name} {help_}"
+    spans = set(fuzzy_positions(needle, hay))
+    out = RichText()
+    for span in range(len(name)):
+        out.append(name[span], style=pal(None, "$primary") if span in spans else pal(None, "dim"))
+    out.append(help_[:64], style="dim")
+    return out
+
+
+# --------------------------------------------------------------------------- chrome
+
+
 def fuzzy_positions(needle: str, haystack: str) -> list[int]:
     """Indices of the palae-shaped chars in `haystack`, so the palette can
     paint matched spans in bold primary instead of dimming the whole help."""
@@ -669,7 +684,7 @@ class Palette(Container):
             self.results.add_options(
                 [
                     Option(
-                        RichText(f" {name:<26s}", style=pal(self, "bold $primary")) + RichText(help_[:64], style="dim"),
+                        _flag_paint(needle, name, help_) if needle else RichText(f" {name:<26s}", style=pal(self, "bold $primary")) + RichText(help_[:64], style="dim"),
                         id=f"opt{i}",
                     )
                     for i, (name, help_) in enumerate(self.visible_rows)
